@@ -1,5 +1,5 @@
 # Face Recognition Lock
-This is not a face recognition lock build from scratch. It is based on existing hardwares and softwares. It is only for a reference, unless you have the same environment
+This is not a face recognition lock build from scratch. It is based on existing hardwares and softwares. It is only for a reference, unless you have the same environment. 
 For lock, I am using **August Smart Wifi Lock (Gen 4)**, for software platform, I am using **home assistant** . It is a great home automation platform. The customizability is endless.  
 
 ## some notes before implementation detail
@@ -33,4 +33,4 @@ The face recognition part is actually the easy part of this project. By using ex
   - shrink the image size
   - only process for a half/quarter of the frame
 - The request send to the home assistant webhook might not be secure
-  - we can also send some encoded message by json to a level of security
+  - we can also send some encoded message by json to add a level of security
