@@ -7,7 +7,8 @@ import requests
 
 
 cap = cv2.VideoCapture(0)
-webhook_url = 'http://192.168.1.154:8123/api/webhook/-FMVJVIWEkBg4BOtauZMYOIjW'
+webhook_id = ""
+webhook_url = 'http://192.168.1.154:8123/api/webhook/' + webhood_id
 os.chdir(os.getcwd() + "/faces")
 files = glob.glob('Lemin?.jpg')
 known_encodings = {"Lemin" :[]}
