@@ -8,58 +8,72 @@ import requests
 
 cap = cv2.VideoCapture(0)
 webhook_id = ""
-webhook_url = 'http://192.168.1.154:8123/api/webhook/' + webhood_id
+url = ""
+webhook_url = url + webhook_id
 os.chdir(os.getcwd() + "/faces")
-files = glob.glob('Lemin?.jpg')
-known_encodings = {"Lemin" :[]}
-for file in files:
-    known_face = face_recognition.load_image_file(file)
-    knonw_face_encoding = face_recognition.face_encodings(known_face)[0]
-    known_encodings["Lemin"].append(knonw_face_encoding)
+names = ["Lemin", "Charles"]
 
+known_encodings = {}
+[known_encodings.setdefault(name, []) for name in names]
+for file_name in names:
+    curfile = file_name + "?.jpg"
+    files = glob.glob(curfile)
+    print(files)
+    for file in files:
+        known_face = face_recognition.load_image_file(file)
+        var =  face_recognition.face_encodings(known_face)
+        if len(var) == 0:
+            print(file)
+        else:
+            knonw_face_encoding = var[0]
+            # print(len(known_encodings["Lemin"]))
+            # print(len(known_encodings["Charles"]))
+            known_encodings[file_name].append(knonw_face_encoding)
+print("file encoding complete")
 face_locations = []
 face_encodings = []
 face_names = []
-verification_counter = dict.fromkeys(['Lemin'], [0, time.time()])
+
+verification_counter = {}
+[verification_counter.setdefault(name, [0, time.time()]) for name in names]
+
 to_process = True
 while True:
     ret, frame = cap.read()
-
     if to_process == True:
         small_frame = cv2.resize(frame, (0,0), fx = 0.25, fy = 0.25)
         face_locations = face_recognition.face_locations(small_frame)
-
-        if len(face_locations) == 0:
-            continue
+        
+        # if len(face_locations) == 0:
+        #     continue
+        # print(len(face_locations))
         face_encodings = face_recognition.face_encodings(small_frame, face_locations)
 
         face_names = []
         # loop through every face dectected in the frame
         for face_encoding in face_encodings:
             #loop through all the known names
+
             for key in known_encodings.keys():
-                matches = face_recognition.compare_faces(known_encodings[key], face_encoding)
+                print(key)
+                matches = face_recognition.compare_faces(known_encodings[key], face_encoding, tolerance= 0.4)
+                print(matches)
                 count = 0
                 for item in matches:
                     if item == True:
                         count = count + 1
-                if count/len(matches) > 0.6:
+                if count/len(matches)  > 0.7:
                     face_names.append(key)
                     verification_counter[key][0] += 1
-                else:
-                    face_names.append("unknown")
-                count = 0
 
+                
                 if verification_counter[key][0] >= 5:
-                    if time.time() - verification_counter[key][1] > 100: 
-                        # send door signal
-                        print("open door request sent")
+                    if time.time() - verification_counter[key][1] > 30: 
+                        print("requst send")
                         r = requests.post(webhook_url)
-                        print("cur_time diff = " + str (time.time() - verification_counter[key][1]))
                         verification_counter[key][1] = time.time()
-                        print("updated diff = " + str (time.time() - verification_counter[key][1]))
                         verification_counter[key][0] = 0
-                        # reset timer     
+            
         
 
         for (top, right, bottom, left), name in zip(face_locations, face_names):
