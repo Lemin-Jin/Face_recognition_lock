@@ -15,7 +15,6 @@ class profile:
         # 0 is webcam, 1 is iphone cam, 2 is mac local cam
         cap = cv2.VideoCapture(0) 
         current_directory = self.path
-        os.chdir("/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/cv2/data")
 
         face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 
