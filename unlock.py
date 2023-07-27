@@ -5,10 +5,11 @@ import time
 import requests
 import argparse
 import logging
+import concurrent.futures as future 
 
 
 def converge(value):
-    if int(value) >= 0 and int(value) < 5:
+    if int(value) >= 0 and int(value) < 10:
         return int(value)
     else:
         raise argparse.ArgumentTypeError("wrong scaling factor")
@@ -21,9 +22,9 @@ parser.add_argument('-d', dest="display", action="store_true", default=False,\
                     help="to display the camera image")
 # parser.add_argument("-hook", dest="webhook_id", action="store", required=True, \
 #                     help="webhook id for home assistant webhook trigger")
-parser.add_argument("-url", dest="url", action="store", required=True, \
+parser.add_argument('-url', dest="url", action="store", required=True, \
                     help="url for home assistant")
-parser.add_argument("-debug",dest="debug",action="store_true", default=False, \
+parser.add_argument('-debug',dest="debug",action="store_true", default=False, \
                     help="turn on debug logging")
 parser.add_argument('-n', dest="names", action="store", required=True, nargs="*", \
                     help="names to unlock faces")
@@ -44,7 +45,10 @@ os.chdir(os.getcwd() + "/faces")
 known_encodings = {}
 [known_encodings.setdefault(name, []) for name in names]
 logging.debug("loading and encoding image")
+start_encoding = time.time()
+
 counter = 0
+
 for file_name in names:
     curfile = file_name + "?.jpg"
     files = glob.glob(curfile)
@@ -53,18 +57,34 @@ for file_name in names:
                         " does not exist in " + os.getcwd() +", please check image name format")
         counter += 1
         continue
-    for file in files:
-        known_face = face_recognition.load_image_file(file)
-        var =  face_recognition.face_encodings(known_face)
-        logging.debug("currently load files: "+file)
-        if len(var) != 0:
-            knonw_face_encoding = var[0]
-            known_encodings[file_name].append(knonw_face_encoding)
+
+    with future.ProcessPoolExecutor() as executor:
+        faces = []
+
+        loaded_images = executor.map(face_recognition.load_image_file, files)
+
+        for face in loaded_images:
+            faces.append(face)
+        
+        encodings = executor.map(face_recognition.face_encodings, faces)
+
+        for encoding in encodings:
+            if len(encoding) != 0:
+                known_encodings[file_name].append(encoding[0])
+        
+    # for file in files:
+    #     known_face = face_recognition.load_image_file(file)
+    #     var =  face_recognition.face_encodings(known_face)
+    #     #logging.debug("currently load files: "+file)
+    #     if len(var) != 0:
+    #         knonw_face_encoding = var[0]
+    #         known_encodings[file_name].append(knonw_face_encoding)
 
 if counter == len(names):
     logging.error("no images in folder matches names, exitting")
     exit()
 
+logging.debug("encoding time is: " + str(time.time() - start_encoding))
 logging.debug("file encoding complete")
 face_locations = []
 face_encodings = []
